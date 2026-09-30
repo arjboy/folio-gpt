@@ -1,6 +1,6 @@
 'use client';
 import { ChevronRight, IndianRupee, Receipt, UtensilsCrossed, WalletCards } from 'lucide-react';
-import { Data, daysAgo, istDate, istTime, money } from '@/lib/data';
+import { Data, daysAgo, istDate, istTime, itemsProfit, money } from '@/lib/data';
 import { Card, Empty, Rows, Stat } from './ui';
 
 const typeLabel: Record<string, string> = { dine_in: 'Dine-in', takeaway: 'Takeaway', delivery: 'Delivery', parcel: 'Parcel' };
@@ -25,6 +25,7 @@ export default function Dashboard({ data, setPage }: { data: Data; setPage: (p: 
   const t = summarize(data, today), y = summarize(data, yesterday);
   const pending = data.orders.filter(o => o.status === 'pending' && istDate(new Date(o.created_at)) === today).length;
   const delta = y.sales ? ((t.sales - y.sales) / y.sales) * 100 : null;
+  const gp = itemsProfit(data.items.filter(i => t.day.some(o => o.id === i.order_id)), data.dishes);
   const week = Array.from({ length: 7 }, (_, i) => { const d = daysAgo(6 - i); return { d, v: summarize(data, d).sales }; });
   const max = Math.max(1, ...week.map(w => w.v));
   const present = data.attendance.filter(a => a.work_date === today && a.punch_in && !a.punch_out);
@@ -39,7 +40,7 @@ export default function Dashboard({ data, setPage }: { data: Data; setPage: (p: 
     <div className="cols">
       <Card title="Sales overview" sub="Last 7 days"><div className="chart">{week.map(w => <div className="bar" title={`${w.d}: ${money(w.v)}`} style={{ height: Math.max(6, (w.v / max) * 100) + '%' }} key={w.d}><i></i><small>{new Date(w.d + 'T12:00:00').toLocaleDateString('en-IN', { weekday: 'narrow' })}</small></div>)}</div></Card>
       <Card title="Today at a glance" sub={new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' })}>
-        <Rows rows={[['Cash sales', money(t.cash)], ['UPI / Card / Online', money(t.digital)], ['Pending credit', money(t.credit)], ['Business expenses', '−' + money(t.expenses)], ['Chef advances', '−' + money(t.advances)]]} />
+        <Rows rows={[['Cash sales', money(t.cash)], ['UPI / Card / Online', money(t.digital)], ['Pending credit', money(t.credit)], ['Business expenses', '−' + money(t.expenses)], ['Chef advances', '−' + money(t.advances)], ...(gp.cost > 0 ? [['Gross profit (after making cost)', money(gp.profit)] as [string, string]] : [])]} />
         <div className="net"><span>Estimated net</span><b>{money(t.net)}</b></div>
       </Card>
     </div>

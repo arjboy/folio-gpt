@@ -7,10 +7,12 @@ import { Card, Common, Empty, Field } from './ui';
 export default function Menu({ data, notify, refresh }: { data: Data } & Common) {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+  const [cost, setCost] = useState('');
   const [cat, setCat] = useState('');
   const [newCat, setNewCat] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState('');
+  const [editCost, setEditCost] = useState('');
 
   async function run(p: PromiseLike<{ error: { message: string } | null }>, ok: string) {
     const { error } = await p;
@@ -21,9 +23,11 @@ export default function Menu({ data, notify, refresh }: { data: Data } & Common)
     const pr = Number(price);
     if (!name.trim() || price === '') return notify('Enter a dish name and price', 'err');
     if (!okMoney(pr)) return notify(MONEY_MSG, 'err');
-    await run(supabase().from('dishes').insert({ name: name.trim(), price: pr, category_id: cat || null }), 'Dish added');
+    const cs = cost.trim() === '' ? null : Number(cost);
+    if (cs !== null && !okMoney(cs)) return notify(MONEY_MSG, 'err');
+    await run(supabase().from('dishes').insert({ name: name.trim(), price: pr, cost: cs, category_id: cat || null }), 'Dish added');
     logActivity('dish_added', 'dish', undefined, { name, price: pr });
-    setName(''); setPrice('');
+    setName(''); setPrice(''); setCost('');
   };
   const addCat = async () => {
     if (!newCat.trim()) return;
@@ -33,7 +37,9 @@ export default function Menu({ data, notify, refresh }: { data: Data } & Common)
   const savePrice = async (id: string) => {
     const pr = Number(editPrice);
     if (editPrice === '' || !okMoney(pr)) return notify(MONEY_MSG, 'err');
-    await run(supabase().from('dishes').update({ price: pr, updated_at: new Date().toISOString() }).eq('id', id), 'Price updated');
+    const cs = editCost.trim() === '' ? null : Number(editCost);
+    if (cs !== null && !okMoney(cs)) return notify(MONEY_MSG, 'err');
+    await run(supabase().from('dishes').update({ price: pr, cost: cs, updated_at: new Date().toISOString() }).eq('id', id), 'Dish updated');
     setEditing(null);
   };
 
@@ -41,10 +47,10 @@ export default function Menu({ data, notify, refresh }: { data: Data } & Common)
     <Card title="Dishes" sub={`${data.dishes.length} dishes · tap availability to hide from POS`}>
       {!data.dishes.length && <Empty text="No dishes yet." />}
       {data.dishes.map(d => <div className="chef" key={d.id}>
-        <div style={{ flex: 1 }}><b>{d.name}</b><small>{data.categories.find(c => c.id === d.category_id)?.name || 'Uncategorised'}</small></div>
+        <div style={{ flex: 1 }}><b>{d.name}</b><small>{data.categories.find(c => c.id === d.category_id)?.name || 'Uncategorised'}{d.cost !== null && ` · cost ${money(d.cost)} · profit ${money(d.price - d.cost)} (${d.price ? Math.round((d.price - d.cost) / d.price * 100) : 0}%)`}</small></div>
         {editing === d.id
-          ? <span className="inline"><input className="mini" inputMode="decimal" value={editPrice} onChange={e => setEditPrice(e.target.value)} /><button className="pill" onClick={() => savePrice(d.id)}>Save</button></span>
-          : <button className="pill" onClick={() => { setEditing(d.id); setEditPrice(String(d.price)); }}>{money(d.price)} ✎</button>}
+          ? <span className="inline"><input className="mini" inputMode="decimal" style={{ width: 70 }} placeholder="Price" value={editPrice} onChange={e => setEditPrice(e.target.value)} /><input className="mini" inputMode="decimal" style={{ width: 70 }} placeholder="Cost" value={editCost} onChange={e => setEditCost(e.target.value)} /><button className="pill" onClick={() => savePrice(d.id)}>Save</button></span>
+          : <button className="pill" onClick={() => { setEditing(d.id); setEditPrice(String(d.price)); setEditCost(d.cost === null ? '' : String(d.cost)); }}>{money(d.price)} ✎</button>}
         <button className={'pill ' + (d.available ? 'okp' : 'offp')} onClick={() => run(supabase().from('dishes').update({ available: !d.available }).eq('id', d.id), d.available ? 'Marked unavailable' : 'Marked available')}>{d.available ? 'Available' : 'Sold out'}</button>
         <button className="pill offp" onClick={() => confirm(`Remove ${d.name} from the menu?`) && run(supabase().from('dishes').update({ archived: true }).eq('id', d.id), 'Dish removed')}>Remove</button>
       </div>)}
@@ -53,6 +59,8 @@ export default function Menu({ data, notify, refresh }: { data: Data } & Common)
       <Card title="Add dish" sub="Appears in POS instantly"><div className="form">
         <Field label="Name"><input value={name} onChange={e => setName(e.target.value)} placeholder="Chilli Garlic Noodles" /></Field>
         <Field label="Price (₹)"><input inputMode="decimal" value={price} onChange={e => setPrice(e.target.value)} /></Field>
+        <Field label="Making cost (₹, optional)"><input inputMode="decimal" value={cost} onChange={e => setCost(e.target.value)} placeholder="Ingredients + gas + packaging" /></Field>
+        {cost !== '' && price !== '' && Number(price) > 0 && <small style={{ color: Number(price) - Number(cost) >= 0 ? '#3f8a4d' : '#b5502f', fontSize: 10 }}>Profit per plate: {money(Number(price) - Number(cost))} ({Math.round((Number(price) - Number(cost)) / Number(price) * 100)}% margin)</small>}
         <Field label="Category"><select value={cat} onChange={e => setCat(e.target.value)}><option value="">None</option>{data.categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>
         <button className="primary" onClick={addDish}>Add dish</button></div></Card>
       <Card title="Categories" sub="Rename or hide">

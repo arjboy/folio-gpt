@@ -3,11 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from './supabase';
 
 export type Category = { id: string; name: string; sort_order: number; archived: boolean };
-export type Dish = { id: string; category_id: string | null; name: string; price: number; available: boolean; archived: boolean; description: string | null };
+export type Dish = { id: string; category_id: string | null; name: string; price: number; cost: number | null; available: boolean; archived: boolean; description: string | null };
 export type Chef = { id: string; name: string; phone: string | null; role: string | null; daily_salary: number | null; monthly_salary: number | null; salary_type: 'daily' | 'monthly'; active: boolean };
 export type Attendance = { id: string; chef_id: string; work_date: string; punch_in: string | null; punch_out: string | null };
 export type Order = { id: string; order_number: string; customer_name: string | null; order_type: string; status: string; payment_method: string; subtotal: number; discount: number; tax: number; total: number; created_at: string; cancellation_reason: string | null };
-export type OrderItem = { order_id: string; dish_name: string; unit_price: number; quantity: number; line_total: number };
+export type OrderItem = { order_id: string; dish_name: string; unit_price: number; unit_cost: number | null; quantity: number; line_total: number };
 export type Expense = { id: string; expense_date: string; person_name: string | null; amount: number; reason: string; category: string; payment_method: string; status: string };
 export type Advance = { id: string; chef_id: string; advance_date: string; amount: number; reason: string | null; approval_status: string; paid: boolean };
 export type Payout = { id: string; chef_id: string; payout_date: string; salary_amount: number; advance_deduction: number; payable_amount: number; paid_amount: number; status: string };
@@ -17,6 +17,16 @@ export type Settings = { id: string; name: string; address: string | null; phone
 export const MAX_MONEY = 1000000;
 export const okMoney = (n: number, allowZero = true) => Number.isFinite(n) && n <= MAX_MONEY && (allowZero ? n >= 0 : n > 0);
 export const MONEY_MSG = 'Enter a valid amount (up to ₹10,00,000)';
+// Profit for sold items: cost captured at sale, else the dish's current cost; items with no known cost are counted separately.
+export function itemsProfit(items: OrderItem[], dishes: Dish[]) {
+  let revenue = 0, cost = 0, unknown = 0;
+  for (const i of items) {
+    const c = i.unit_cost ?? dishes.find(d => d.name === i.dish_name)?.cost ?? null;
+    if (c === null) { unknown += i.line_total; continue; }
+    revenue += i.line_total; cost += c * i.quantity;
+  }
+  return { revenue, cost, profit: revenue - cost, unknown };
+}
 export const money = (n: number) => '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 // Business days follow India time regardless of where the browser is.
 export const istDate = (d = new Date()) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
@@ -59,11 +69,11 @@ export function useData(enabled: boolean) {
     const it = ids.length ? await sb.from('order_items').select('*').in('order_id', ids) : { data: [] as any[] };
     setData({
       categories: cat.data as Category[],
-      dishes: num(dis.data as Dish[], ['price']),
+      dishes: num(dis.data as Dish[], ['price', 'cost']),
       chefs: num(chf.data as Chef[], ['daily_salary', 'monthly_salary']),
       attendance: att.data as Attendance[],
       orders,
-      items: num(it.data as OrderItem[], ['unit_price', 'quantity', 'line_total']),
+      items: num(it.data as OrderItem[], ['unit_price', 'unit_cost', 'quantity', 'line_total']),
       expenses: num(exp.data as Expense[], ['amount']),
       advances: num(adv.data as Advance[], ['amount']),
       payouts: num(pay.data as Payout[], ['salary_amount', 'advance_deduction', 'payable_amount', 'paid_amount']),

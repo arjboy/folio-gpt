@@ -62,7 +62,7 @@ export function NewOrder({ data, notify, refresh }: { data: Data } & Common) {
       if (r.error) err = r.error.message; else order = r.data as Order;
     }
     if (!order) { setBusy(false); return notify('Could not save order: ' + err, 'err'); }
-    const items = lines.map(l => ({ order_id: order!.id, dish_id: l.dish.id, dish_name: l.dish.name, unit_price: l.dish.price, quantity: l.n, line_total: l.dish.price * l.n }));
+    const items = lines.map(l => ({ order_id: order!.id, dish_id: l.dish.id, dish_name: l.dish.name, unit_price: l.dish.price, unit_cost: l.dish.cost, quantity: l.n, line_total: l.dish.price * l.n }));
     const ir = await sb.from('order_items').insert(items);
     if (ir.error) { await sb.from('orders').delete().eq('id', order.id); setBusy(false); return notify('Could not save items: ' + ir.error.message, 'err'); }
     logActivity('order_created', 'order', order.id, { total, pay });
