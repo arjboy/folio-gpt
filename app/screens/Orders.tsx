@@ -73,6 +73,7 @@ export function NewOrder({ data, notify, refresh }: { data: Data } & Common) {
   }
 
   return <div className="pos">
+    {count > 0 && <button className="cartBar" onClick={() => document.getElementById('bill')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><span>{count} item{count > 1 ? 's' : ''} · View order</span><b>{money(total)}</b></button>}
     <Card title="Quick order" sub="Tap dishes to add them to the bill">
       <div className="search"><Search size={15} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search dishes..." /></div>
       <div className="cats">{['All', ...data.categories.map(c => c.name)].map(c => <button className={cat === c ? 'chosen' : ''} onClick={() => setCat(c)} key={c}>{c}</button>)}</div>
@@ -80,7 +81,7 @@ export function NewOrder({ data, notify, refresh }: { data: Data } & Common) {
       <div className="dishes">{filtered.map((d: Dish) => <button className="dish" key={d.id} onClick={() => add(d.id, 1)}>
         {cart[d.id] > 0 && <i className="qty">{cart[d.id]}</i>}<span>{emoji(catName(d.category_id))}</span><b>{d.name}</b><small>{catName(d.category_id)}</small><strong>{money(d.price)}</strong></button>)}</div>
     </Card>
-    <div className="bill">
+    <div className="bill" id="bill">
       <div><h2>Current order</h2><small>{count} items</small></div>
       <div className="seg">{types.map(([v, l]) => <button key={v} className={type === v ? 'on' : ''} onClick={() => setType(v)}>{l}</button>)}</div>
       {lines.map(({ dish, n }) => <div className="line" key={dish.id}>

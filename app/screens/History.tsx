@@ -41,7 +41,7 @@ export default function History({ data, notify, refresh }: { data: Data } & Comm
     : confirm(`Cancel bill #${live!.order_number}? This removes it from sales.`) && update({ status: 'cancelled', cancelled_at: new Date().toISOString(), cancellation_reason: reason.trim() }, 'Order cancelled', 'order_cancelled');
 
   return <div className="pos">
-    <Card title="Order history" sub={`${list.length} bills · ${money(list.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0))}`}>
+    <Card title="Order history" sub={`${list.length} ${list.length === 1 ? 'bill' : 'bills'} · ${money(list.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0))}`}>
       <div className="toolbar"><div className="search"><Search size={15} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search bill # or customer…" /></div></div>
       <div className="seg">{[[0, 'Today'], [1, '2 days'], [6, '7 days'], [29, '30 days']].map(([n, l]) => <button key={n} className={range === n ? 'on' : ''} onClick={() => setRange(n as number)}>{l}</button>)}</div>
       <div className="seg">{[['all', 'All'], ['completed', 'Completed'], ['pending', 'Pending / credit'], ['cancelled', 'Cancelled']].map(([v, l]) => <button key={v} className={status === v ? 'on' : ''} onClick={() => setStatus(v)}>{l}</button>)}</div>
@@ -50,7 +50,8 @@ export default function History({ data, notify, refresh }: { data: Data } & Comm
         <span>#{o.order_number}</span><span>{istTime(o.created_at)}</span><span>{typeLabel[o.order_type] || o.order_type}</span><span style={{ textTransform: 'capitalize' }}>{o.payment_method}</span><span>{money(o.total)}</span>
         <span className={o.status === 'completed' ? 'ok' : o.status === 'cancelled' ? 'bad' : 'warn'} style={{ textTransform: 'capitalize' }}>{o.status}</span></div>)}</div>
     </Card>
-    <div className="bill">
+    {live && <div className="sheetBackdrop" onClick={() => setOpen(null)} />}
+    <div className={'bill ' + (live ? 'sheet' : 'nosel')}>
       {!live ? <Empty text="Select a bill to view, reprint, settle or cancel it." /> : <>
         <div className="billHead"><div><h2>Bill #{live.order_number}</h2><small>{new Date(live.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</small></div><button className="iconBtn" aria-label="Close" onClick={() => setOpen(null)}><X size={14} /></button></div>
         <p className="none">{typeLabel[live.order_type]} · {live.payment_method}{live.customer_name ? ' · ' + live.customer_name : ''}</p>

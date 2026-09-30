@@ -12,6 +12,8 @@ import Expenses from './screens/Expenses';
 import Calendar from './screens/Calendar';
 import Reports from './screens/Reports';
 import Settings from './screens/Settings';
+import { Modal } from './screens/ui';
+import { MoreHorizontal } from 'lucide-react';
 
 const nav = [['Dashboard', LayoutDashboard], ['Orders', ShoppingBag], ['Menu', UtensilsCrossed], ['Chefs', Users], ['Expenses', WalletCards], ['Calendar', CalendarDays], ['Reports', BarChart3], ['Settings', SettingsIcon]] as const;
 
@@ -47,6 +49,7 @@ export default function Home() {
     const hit = nav.find(n => n[0].toLowerCase() === seg);
     if (hit) setPage(hit[0]);
   }, []);
+  const [more, setMore] = useState(false);
   const [toast, setToast] = useState<{ msg: string; kind: string } | null>(null);
 
   useEffect(() => {
@@ -94,6 +97,14 @@ export default function Home() {
         : page === 'Reports' ? <Reports data={data} />
         : <Settings {...common} />}
     </main>
+    <div className="tabbar">
+      {nav.slice(0, 4).map(([n, I]) => <button key={n} className={page === n ? 'sel' : ''} onClick={() => setPage(n)}><I size={20} /><span>{n}</span></button>)}
+      <button className={nav.slice(4).some(n => n[0] === page) ? 'sel' : ''} onClick={() => setMore(true)}><MoreHorizontal size={20} /><span>{nav.slice(4).find(n => n[0] === page)?.[0] || 'More'}</span></button>
+    </div>
+    {more && <Modal title="More" onClose={() => setMore(false)}>
+      <div className="moreGrid">{nav.slice(4).map(([n, I]) => <button key={n} className={page === n ? 'sel' : ''} onClick={() => { setPage(n); setMore(false); }}><I size={22} />{n}</button>)}</div>
+      <button className="secondary" style={{ justifyContent: 'center' }} onClick={() => { setMore(false); supabase().auth.signOut(); }}>Log out</button>
+    </Modal>}
     {toast && <div className={'toast ' + toast.kind} role="status">{toast.msg}</div>}
   </div>;
 }
