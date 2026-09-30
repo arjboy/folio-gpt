@@ -3,26 +3,12 @@
 Responsive restaurant management application for The Chinese Wala.
 
 ## Stack
-Next.js App Router, React, TypeScript, Supabase foundation, and Vercel deployment target.
+Next.js App Router, React, TypeScript, Supabase Postgres/Auth foundation, and Vercel deployment target.
 
-## Current UI
-- Dashboard with sales, order, item and net-collection KPIs
-- Working POS ordering with search, categories, cart quantities and payment selection
-- Order persistence in browser storage
-- Menu management: add, edit, availability toggle and delete
-- Chef management and attendance toggles
-- Expense ledger with add, edit and delete
-- Operations calendar
-- Sales/reporting view with payment mix and CSV export
-- Restaurant billing/profile settings
-- Responsive desktop/tablet/mobile layout
+## Database
+The connected Supabase project now has tables for business settings, menu categories, dishes, chefs, orders, order items, attendance, expenses, chef advances, salary payouts, daily notes, and activity logs, with seeded categories, dishes, and an example chef.
 
-## Data
-The Supabase project contains the production database foundation for business settings, menu categories, dishes, chefs, orders, order items, attendance, expenses, chef advances, salary payouts, daily notes and activity logs. The current UI intentionally runs in local browser storage so the POS remains usable without a Supabase authentication session.
-
-Environment variables for the eventual authenticated Supabase connection:
-`NEXT_PUBLIC_SUPABASE_URL`
-`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to connect the UI to live records.
 
 ## Local setup
 ```bash
@@ -30,5 +16,18 @@ npm install
 npm run dev
 ```
 
-## Deployment
-The repository is connected to Vercel. `vercel.json` uses the Next.js framework and `.next` output directory.
+## Access
+Sign in with Supabase Auth (username `admin` maps to `admin@thechinesewala.app`). Row-level security on every restaurant table only allows that account, so the data is protected on the server, not just hidden in the UI. To change the password, use Supabase → Authentication → Users.
+
+## What is wired to Supabase
+- **Dashboard**: today's sales, order count, items sold, cash/digital/credit split, expenses, advances, 7-day chart, recent orders, chef attendance — all computed from real records (India time).
+- **Order history**: search, date/status filters, bill detail, reprint, settle credit bills, cancel with reason.
+- **Orders (POS)**: dishes/categories from DB, quantity steppers, order type, discount, GST from Settings, payment method, saves `orders` + `order_items`, printable bill.
+- **Menu**: add dishes/categories, edit price, mark sold out, remove.
+- **Chefs**: add chefs, punch in/out, advances, monthly payable, pay salary (deducts advances).
+- **Expenses**: add/delete, daily and monthly totals.
+- **Calendar**: end-of-day closing checklist and notes (`daily_notes`).
+- **Reports**: 7/14/30-day summary, best sellers, CSV export.
+- **Settings**: business name, address, GST, bill footer, hours, JSON backup download.
+
+Data auto-refreshes every 45 seconds. Direct links such as `/orders` or `/chefs` open the matching screen.
