@@ -1,12 +1,85 @@
 'use client';
-import {useMemo,useState} from 'react';
-import {LayoutDashboard,ShoppingBag,UtensilsCrossed,Users,WalletCards,CalendarDays,BarChart3,Settings,Plus,Search,ChevronRight,IndianRupee,Receipt} from 'lucide-react';
-const cats=['All','Momos','Noodles','Fried Rice','Starters','Soups','Rolls','Beverages','Combos'];
-const dishes=[['Veg Steam Momos','Momos',120,'🥟'],['Paneer Momos','Momos',150,'🥟'],['Hakka Noodles','Noodles',140,'🍜'],['Schezwan Fried Rice','Fried Rice',160,'🍚'],['Chilli Paneer','Starters',190,'🥢'],['Manchow Soup','Soups',110,'🍲'],['Paneer Spring Roll','Rolls',130,'🥠'],['Cold Drink','Beverages',60,'🥤']];
-const nav=[['Dashboard',LayoutDashboard],['Orders',ShoppingBag],['Menu',UtensilsCrossed],['Chefs',Users],['Expenses',WalletCards],['Calendar',CalendarDays],['Reports',BarChart3],['Settings',Settings]] as const;
-const money=(n:number)=>'₹'+n.toLocaleString('en-IN');
-export default function Home(){const[page,setPage]=useState('Dashboard');const[cat,setCat]=useState('All');const[q,setQ]=useState('');const[cart,setCart]=useState<Record<string,number>>({});const filtered=dishes.filter(d=>(cat==='All'||d[1]===cat)&&String(d[0]).toLowerCase().includes(q.toLowerCase()));const total=useMemo(()=>dishes.reduce((s,d)=>s+(cart[String(d[0])]||0)*Number(d[2]),0),[cart]);const count=Object.values(cart).reduce((a,b)=>a+b,0);
-return <div className="app"><aside><div className="brand"><b>🍜 The Chinese Wala</b><small>Restaurant OS</small></div><nav>{nav.map(([n,I])=><button className={page===n?'sel':''} onClick={()=>setPage(n)} key={n}><I size={17}/>{n}</button>)}</nav><div className="open">● Restaurant open<br/><b>10:30 AM — 11 PM</b></div><div className="user"><span>A</span><div><b>Owner Admin</b><small>Full access</small></div></div></aside><main><header><div><small>Restaurant management / {page}</small><h1>{page==='Dashboard'?'Good evening, Owner 👋':page}</h1><p>Simple, fast operations for The Chinese Wala.</p></div><button className="primary" onClick={()=>setPage('Orders')}><Plus size={16}/> New Order</button></header>{page==='Dashboard'?<Dashboard setPage={setPage}/>:page==='Orders'?<Orders filtered={filtered} cat={cat} setCat={setCat} q={q} setQ={setQ} cart={cart} setCart={setCart} total={total} count={count}/>:<div className="empty"><div>{page==='Menu'?'🍜':page==='Chefs'?'👨‍🍳':page==='Expenses'?'🧾':page==='Calendar'?'📅':page==='Reports'?'📊':'⚙️'}</div><h2>{page}</h2><p>This module is ready for its persistent Supabase records and owner controls.</p><button className="primary" onClick={()=>setPage('Dashboard')}>Back to dashboard</button></div>}</main></div>}
-function Dashboard({setPage}:any){return <><section className="stats"><Stat icon={<IndianRupee/>} label="Today's sales" value="₹18,450" note="+12.4% vs yesterday"/><Stat icon={<Receipt/>} label="Orders" value="86" note="8 pending"/><Stat icon={<UtensilsCrossed/>} label="Items sold" value="214" note="Top dish: Momos"/><Stat icon={<WalletCards/>} label="Net collection" value="₹12,680" note="After expenses & payouts"/></section><div className="cols"><Card title="Sales overview" sub="Last 7 days"><div className="chart">{[42,58,46,72,64,88,76].map((h,i)=><div className="bar" style={{height:h+'%'}} key={i}><i></i><small>{['M','T','W','T','F','S','S'][i]}</small></div>)}</div></Card><Card title="Today at a glance" sub="30 Sep 2026"><Rows rows={[["Cash sales","₹7,200"],["UPI / Online","₹9,850"],["Pending credit","₹1,400"],["Business expenses","−₹2,150"],["Chef advances","−₹850"]]}/><div className="net"><span>Estimated net</span><b>₹12,680</b></div></Card></div><div className="cols"><Card title="Quick actions" sub="Common restaurant tasks"><div className="quick">{[['New order','Create a POS bill','Orders'],['Chef attendance','Punch in / out','Chefs'],['Add expense','Record grocery spend','Expenses'],['Pay salary','Settle chef payout','Chefs']].map(x=><button key={x[0]} onClick={()=>setPage(x[2])}><b>{x[0]}</b><small>{x[1]}</small><ChevronRight size={15}/></button>)}</div></Card><Card title="Chef attendance" sub="1 of 2 currently present"><div className="chef"><span>R</span><div><b>Ravi Kumar</b><small>Head Chef · ₹850/day</small></div><em>● Punched in<br/><small>10:12 AM</small></em></div><div className="chef"><span>A</span><div><b>Amit Singh</b><small>Kitchen Helper</small></div><em className="muted">● Absent</em></div></Card></div><Card title="Recent orders" sub="Latest bills"><div className="table">{[['#CW-0086','Takeaway','3 items','UPI','₹520','Completed'],['#CW-0085','Dine-in','5 items','Cash','₹840','Completed'],['#CW-0084','Delivery','2 items','Credit','₹320','Pending']].map(r=><div className="tr" key={r[0]}>{r.map((x,i)=><span className={i===5?(x==='Completed'?'ok':'warn'):''} key={i}>{x}</span>)}</div>)}</div></Card></>}
-function Orders({filtered,cat,setCat,q,setQ,cart,setCart,total,count}:any){return <div className="pos"><Card title="Quick order" sub="Tap dishes to add them to the bill"><div className="search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search dishes..."/></div><div className="cats">{cats.map(c=><button className={cat===c?'chosen':''} onClick={()=>setCat(c)} key={c}>{c}</button>)}</div><div className="dishes">{filtered.map((d:any)=><button className="dish" key={d[0]} onClick={()=>setCart((x:any)=>({...x,[d[0]]:(x[d[0]]||0)+1}))}><span>{d[3]}</span><b>{d[0]}</b><small>{d[1]}</small><strong>{money(d[2])}</strong></button>)}</div></Card><aside className="bill"><div><h2>Current order</h2><small>{count} items</small></div>{Object.entries(cart).filter(([,n]:any)=>n).map(([name,n]:any)=><div className="line" key={name}><span><b>{name}</b><small>{n} × {money(Number(dishes.find(d=>d[0]===name)?.[2]||0))}</small></span><strong>{money(n*Number(dishes.find(d=>d[0]===name)?.[2]||0))}</strong></div>)}<div className="billFoot"><Rows rows={[["Subtotal",money(total)],["Discount","₹0"],["Tax","₹0"]]}/><div className="total"><span>Total</span><b>{money(total)}</b></div><div className="payments"><button>Cash</button><button>UPI</button><button>Card</button><button>Credit</button></div><button className="checkout" disabled={!count}>Complete order · {money(total)}</button></div></aside></div>}
-function Stat({icon,label,value,note}:any){return <div className="stat"><div className="ico">{icon}</div><small>{label}</small><strong>{value}</strong><em>{note}</em></div>};function Card({title,sub,children}:any){return <section className="card"><div className="cardHead"><div><h2>{title}</h2><small>{sub}</small></div></div>{children}</section>};function Rows({rows}:any){return <div>{rows.map((r:any)=><div className="row" key={r[0]}><span>{r[0]}</span><b>{r[1]}</b></div>)}</div>}
+import { useEffect, useState } from 'react';
+import type { Session } from '@supabase/supabase-js';
+import { LayoutDashboard, ShoppingBag, UtensilsCrossed, Users, WalletCards, CalendarDays, BarChart3, Settings as SettingsIcon, Plus, RefreshCw } from 'lucide-react';
+import { supabase, supabaseConfigured } from '@/lib/supabase';
+import { useData } from '@/lib/data';
+import Dashboard from './screens/Dashboard';
+import Orders from './screens/Orders';
+import Menu from './screens/Menu';
+import Chefs from './screens/Chefs';
+import Expenses from './screens/Expenses';
+import Calendar from './screens/Calendar';
+import Reports from './screens/Reports';
+import Settings from './screens/Settings';
+
+const nav = [['Dashboard', LayoutDashboard], ['Orders', ShoppingBag], ['Menu', UtensilsCrossed], ['Chefs', Users], ['Expenses', WalletCards], ['Calendar', CalendarDays], ['Reports', BarChart3], ['Settings', SettingsIcon]] as const;
+
+function Login() {
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const go = async (e: React.FormEvent) => {
+    e.preventDefault(); setBusy(true); setErr('');
+    const { error } = await supabase().auth.signInWithPassword({ email, password: pw });
+    if (error) setErr(error.message);
+    setBusy(false);
+  };
+  return <div className="login"><form className="card" onSubmit={go}>
+    <h1>🍜 The Chinese Wala</h1><small>Sign in to Restaurant OS</small>
+    <div className="form"><label className="field"><small>Email</small><input type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></label>
+      <label className="field"><small>Password</small><input type="password" autoComplete="current-password" required value={pw} onChange={e => setPw(e.target.value)} /></label>
+      {err && <p className="errtxt">{err}</p>}<button className="primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button></div>
+  </form></div>;
+}
+
+export default function Home() {
+  const [page, setPage] = useState('Dashboard');
+  const [session, setSession] = useState<Session | null>(null);
+  const [ready, setReady] = useState(!supabaseConfigured);
+  const [toast, setToast] = useState<{ msg: string; kind: string } | null>(null);
+
+  useEffect(() => {
+    if (!supabaseConfigured) return;
+    const sb = supabase();
+    sb.auth.getSession().then(({ data }) => { setSession(data.session); setReady(true); });
+    const { data: sub } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const authed = Boolean(session);
+  const { data, loading, error, refresh } = useData(authed);
+  const notify = (msg: string, kind: 'ok' | 'err' = 'ok') => { setToast({ msg, kind }); setTimeout(() => setToast(null), 3500); };
+  const common = { data, notify, refresh };
+
+  if (!supabaseConfigured) return <div className="login"><div className="card"><h1>Setup needed</h1><p className="errtxt">NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are not set on this deployment.</p></div></div>;
+  if (!ready) return null;
+  if (!authed) return <Login />;
+
+  const hour = Number(new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', hour12: false }));
+  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const s = data.settings;
+  const hm = (t: string | null) => t ? new Date('1970-01-01T' + t).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) : '';
+
+  return <div className="app">
+    <aside><div className="brand"><b>🍜 {s?.name || 'The Chinese Wala'}</b><small>Restaurant OS</small></div>
+      <nav>{nav.map(([n, I]) => <button className={page === n ? 'sel' : ''} onClick={() => setPage(n)} key={n}><I size={17} />{n}</button>)}</nav>
+      <div className="open">● Restaurant open<br /><b>{s ? `${hm(s.opening_time)} — ${hm(s.closing_time)}` : ''}</b></div>
+      <div className="user"><span>{(session?.user.email || 'A')[0].toUpperCase()}</span><div><b>Owner</b><small>{session?.user.email}</small></div></div></aside>
+    <main><header><div><small>Restaurant management / {page}</small><h1>{page === 'Dashboard' ? `${greet}, Owner 👋` : page}</h1><p>Simple, fast operations for {s?.name || 'The Chinese Wala'}.</p></div>
+      <div className="hbtns"><button className="ghostbtn" aria-label="Refresh" onClick={() => refresh().then(() => notify('Refreshed'))}><RefreshCw size={14} /></button><button className="primary" onClick={() => setPage('Orders')}><Plus size={16} /> New Order</button></div></header>
+      {error && <p className="errtxt">Could not load data: {error}</p>}
+      {loading ? <div className="empty"><p>Loading your restaurant…</p></div>
+        : page === 'Dashboard' ? <Dashboard data={data} setPage={setPage} />
+        : page === 'Orders' ? <Orders {...common} />
+        : page === 'Menu' ? <Menu {...common} />
+        : page === 'Chefs' ? <Chefs {...common} />
+        : page === 'Expenses' ? <Expenses {...common} />
+        : page === 'Calendar' ? <Calendar {...common} />
+        : page === 'Reports' ? <Reports data={data} />
+        : <Settings {...common} />}
+    </main>
+    {toast && <div className={'toast ' + toast.kind} role="status">{toast.msg}</div>}
+  </div>;
+}

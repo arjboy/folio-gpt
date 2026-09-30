@@ -16,7 +16,15 @@ npm install
 npm run dev
 ```
 
-## Included UI
-Responsive owner dashboard, KPI cards, sales overview, recent orders, chef attendance, quick actions, POS ordering with category/search filters, cart totals and payment choices, plus responsive placeholders for Menu, Chefs, Expenses, Calendar, Reports and Settings.
+## Login
+The database policies only allow signed-in (`authenticated`) users, so the app now shows a login screen. Create the owner account in Supabase → Authentication → Users (email + password), then sign in.
 
-The next implementation phase is wiring every management screen to Supabase CRUD/auth and completing receipt printing, exports, audit workflows and role permissions.
+## What is wired to Supabase
+- **Dashboard**: today's sales, order count, items sold, cash/digital/credit split, expenses, advances, 7-day chart, recent orders, chef attendance — all computed from real records (India time).
+- **Orders (POS)**: dishes/categories from DB, quantity steppers, order type, discount, GST from Settings, payment method, saves `orders` + `order_items`, printable bill.
+- **Menu**: add dishes/categories, edit price, mark sold out, remove.
+- **Chefs**: add chefs, punch in/out, advances, monthly payable, pay salary (deducts advances).
+- **Expenses**: add/delete, daily and monthly totals.
+- **Calendar**: end-of-day closing checklist and notes (`daily_notes`).
+- **Reports**: 7/14/30-day summary, best sellers, CSV export.
+- **Settings**: business name, address, GST, bill footer, hours, sign out.
