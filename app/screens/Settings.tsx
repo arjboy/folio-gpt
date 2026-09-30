@@ -24,6 +24,5 @@ export default function Settings({ data, notify, refresh }: { data: Data } & Com
       <label className="check"><input type="checkbox" checked={s.gst_enabled} onChange={e => set('gst_enabled', e.target.checked)} />Charge GST on bills</label>
       {s.gst_enabled && <Field label="GST %"><input inputMode="decimal" value={s.gst_percent} onChange={e => set('gst_percent', e.target.value)} /></Field>}
       <button className="primary" onClick={save}>Save settings</button></div></Card>
-    <Card title="Account" sub="Signed in"><button className="primary" onClick={() => supabase().auth.signOut()}>Sign out</button></Card>
   </div>;
 }

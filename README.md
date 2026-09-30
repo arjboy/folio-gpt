@@ -16,8 +16,8 @@ npm install
 npm run dev
 ```
 
-## Login
-The database policies only allow signed-in (`authenticated`) users, so the app now shows a login screen. Create the owner account in Supabase → Authentication → Users (email + password), then sign in.
+## Access
+There is no login for now. The app starts an anonymous Supabase session automatically (enable anonymous sign-ins under Authentication → Sign In / Providers), which satisfies the `authenticated` RLS policies. Add real owner login before sharing the URL widely.
 
 ## What is wired to Supabase
 - **Dashboard**: today's sales, order count, items sold, cash/digital/credit split, expenses, advances, 7-day chart, recent orders, chef attendance — all computed from real records (India time).
