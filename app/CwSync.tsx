@@ -17,7 +17,6 @@ export default function CwSync() {
     const originalSetItem = storage.setItem.bind(storage);
     const originalRemoveItem = storage.removeItem.bind(storage);
     let ready = false;
-    let loading = true;
     let queued: string | null = null;
     let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -27,7 +26,8 @@ export default function CwSync() {
       saveTimer = setTimeout(async () => {
         try {
           const data = JSON.parse(raw);
-          await supabase.from('restaurant_store').upsert({ id: STORE_ID, data, updated_at: new Date().toISOString() });
+          const { error } = await supabase.from('restaurant_store').upsert({ id: STORE_ID, data, updated_at: new Date().toISOString() });
+          if (error) throw error;
         } catch (e) {
           console.error('Restaurant data sync failed', e);
         }
@@ -41,9 +41,7 @@ export default function CwSync() {
 
     storage.removeItem = ((key: string) => {
       originalRemoveItem(key);
-      if (key === STORE_KEY && ready) {
-        void supabase.from('restaurant_store').delete().eq('id', STORE_ID);
-      }
+      if (key === STORE_KEY && ready) void supabase.from('restaurant_store').delete().eq('id', STORE_ID);
     }) as Storage['removeItem'];
 
     const sync = async () => {
@@ -56,34 +54,38 @@ export default function CwSync() {
         if (error) throw error;
 
         const localRaw = storage.getItem(STORE_KEY);
-        const local = localRaw ? JSON.parse(localRaw) : null;
         const remoteData = remote?.data as any;
 
         if (remoteData && typeof remoteData === 'object') {
-          // The database is the source of truth after the first successful sync.
-          originalSetItem(STORE_KEY, JSON.stringify(remoteData));
+          const remoteRaw = JSON.stringify(remoteData);
           ready = true;
-          queued = null;
-          window.dispatchEvent(new CustomEvent('cw-store-synced'));
+          if (localRaw !== remoteRaw) {
+            originalSetItem(STORE_KEY, remoteRaw);
+            queued = null;
+            // A new Vercel preview/browser may have no local copy yet. Reload once
+            // so the existing app reads the database-backed store on its normal mount.
+            window.location.reload();
+          }
           return;
         }
 
-        // First run: preserve any existing browser data by migrating it into Supabase.
+        // First sync: preserve existing browser data by migrating it into Supabase.
         ready = true;
-        if (local) {
-          await supabase.from('restaurant_store').upsert({ id: STORE_ID, data: local, updated_at: new Date().toISOString() });
+        if (localRaw) {
+          const local = JSON.parse(localRaw);
+          const { error: upsertError } = await supabase.from('restaurant_store').upsert({ id: STORE_ID, data: local, updated_at: new Date().toISOString() });
+          if (upsertError) throw upsertError;
           queued = null;
         } else if (queued) {
           const data = JSON.parse(queued);
-          await supabase.from('restaurant_store').upsert({ id: STORE_ID, data, updated_at: new Date().toISOString() });
+          const { error: upsertError } = await supabase.from('restaurant_store').upsert({ id: STORE_ID, data, updated_at: new Date().toISOString() });
+          if (upsertError) throw upsertError;
           queued = null;
         }
       } catch (e) {
         console.error('Restaurant database sync unavailable; browser persistence remains active.', e);
         ready = true;
         if (queued) save(queued);
-      } finally {
-        loading = false;
       }
     };
 
@@ -93,7 +95,6 @@ export default function CwSync() {
       storage.setItem = originalSetItem;
       storage.removeItem = originalRemoveItem;
       if (saveTimer) clearTimeout(saveTimer);
-      loading = false;
     };
   }, []);
 
