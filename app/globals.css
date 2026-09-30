@@ -16,7 +16,7 @@
 .stepper{display:flex;align-items:center;gap:5px}.stepper button{background:#f0f0eb;border-radius:5px;width:22px;height:22px;display:grid;place-items:center}.stepper strong{min-width:52px;text-align:right}
 .tr.exp{grid-template-columns:.9fr 2fr .8fr .8fr .7fr;min-width:520px;align-items:center}.tr.exp6{grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;min-width:600px}
 .hbtns{display:flex;gap:8px;align-items:center}.ghostbtn{background:#fff;border:1px solid #e3e3dd;border-radius:8px;padding:10px}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#242522;color:#fff;padding:11px 16px;border-radius:9px;font-size:11px;z-index:50;max-width:90vw}.toast.err{background:#b5402a}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#242522;color:#fff;padding:11px 16px;border-radius:9px;font-size:11px;z-index:200;max-width:90vw}.toast.err{background:#b5402a}
 .login{min-height:100vh;display:grid;place-items:center;padding:16px}.login .card{width:100%;max-width:340px;padding:24px}.login h1{font-size:18px}
 .quick button>div{text-align:left}
 .tr.hist{grid-template-columns:1.1fr .8fr 1fr 1fr .9fr 1fr;cursor:pointer;min-width:520px}.tr.hist:hover,.tr.hist.active{background:#fff8e8}.bad{color:#c0452f}
@@ -29,3 +29,23 @@
 .editPanel .primary,.editPanel .secondary{padding:9px 14px;font-size:10px;margin-bottom:0}
 .secondary{background:#fff;border:1px solid #e3e3dd;border-radius:8px;font-weight:700;color:#333}
 .chef>.inline{flex:0 0 auto;justify-content:flex-end}
+
+/* Popup dialog */
+.modalBackdrop{position:fixed;inset:0;background:rgba(25,26,24,.55);display:grid;place-items:center;z-index:100;padding:16px;animation:fadeIn .15s ease}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:480px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.25);animation:popIn .18s ease}
+.modalHead{display:flex;justify-content:space-between;align-items:flex-start;padding:18px 20px 12px}
+.modalHead h2{font-size:15px;margin:0}.modalHead small{color:#92948d;font-size:10px}
+.modalBody{padding:4px 20px 8px;overflow:auto;display:grid;gap:12px}
+.modalFoot{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:14px 20px;border-top:1px solid #f0f0ec}
+.modalFoot .left{margin-right:auto}
+.modalBody .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.margin{font-size:10px;padding:9px 11px;border-radius:8px;background:#f2f8f3;color:#3f8a4d}.margin.neg{background:#fbeeea;color:#b5502f}.margin.idle{background:#f6f6f2;color:#92948d}
+.dishRow{display:flex;align-items:center;gap:10px;padding:11px 8px;border-bottom:1px solid #f0f0ec;cursor:pointer;border-radius:8px}.dishRow:last-child{border:0}.dishRow:hover{background:#fafaf7}
+.dishRow .info{flex:1;min-width:0}.dishRow b{font-size:11px;display:block}.dishRow small{font-size:9px;color:#999;display:block;margin-top:3px}
+.dishRow .price{text-align:right;font-size:11px;font-weight:700}.dishRow .price small{font-weight:400}
+.dishRow.off{opacity:.55}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@media(max-width:600px){.modalBackdrop{align-items:end;padding:0}.modal{max-width:none;border-radius:16px 16px 0 0;max-height:92vh}.modalBody .row2{grid-template-columns:1fr 1fr}}
+.secondary{padding:10px 14px;font-size:11px;display:inline-flex;align-items:center;gap:6px}
+.cardHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+@media(max-width:600px){.toast{bottom:auto;top:14px}}
