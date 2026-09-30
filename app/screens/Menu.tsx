@@ -46,13 +46,19 @@ export default function Menu({ data, notify, refresh }: { data: Data } & Common)
   return <div className="cols">
     <Card title="Dishes" sub={`${data.dishes.length} dishes · tap availability to hide from POS`}>
       {!data.dishes.length && <Empty text="No dishes yet." />}
-      {data.dishes.map(d => <div className="chef" key={d.id}>
-        <div style={{ flex: 1 }}><b>{d.name}</b><small>{data.categories.find(c => c.id === d.category_id)?.name || 'Uncategorised'}{d.cost !== null && ` · cost ${money(d.cost)} · profit ${money(d.price - d.cost)} (${d.price ? Math.round((d.price - d.cost) / d.price * 100) : 0}%)`}</small></div>
-        {editing === d.id
-          ? <span className="inline"><input className="mini" inputMode="decimal" style={{ width: 70 }} placeholder="Price" value={editPrice} onChange={e => setEditPrice(e.target.value)} /><input className="mini" inputMode="decimal" style={{ width: 70 }} placeholder="Cost" value={editCost} onChange={e => setEditCost(e.target.value)} /><button className="pill" onClick={() => savePrice(d.id)}>Save</button></span>
-          : <button className="pill" onClick={() => { setEditing(d.id); setEditPrice(String(d.price)); setEditCost(d.cost === null ? '' : String(d.cost)); }}>{money(d.price)} ✎</button>}
-        <button className={'pill ' + (d.available ? 'okp' : 'offp')} onClick={() => run(supabase().from('dishes').update({ available: !d.available }).eq('id', d.id), d.available ? 'Marked unavailable' : 'Marked available')}>{d.available ? 'Available' : 'Sold out'}</button>
-        <button className="pill offp" onClick={() => confirm(`Remove ${d.name} from the menu?`) && run(supabase().from('dishes').update({ archived: true }).eq('id', d.id), 'Dish removed')}>Remove</button>
+      {data.dishes.map(d => <div className="chef wrapRow" key={d.id}>
+        <div style={{ flex: 1, minWidth: 140 }}><b>{d.name}</b><small>{data.categories.find(c => c.id === d.category_id)?.name || 'Uncategorised'}{d.cost != null && ` · cost ${money(d.cost)} · profit ${money(d.price - d.cost)} (${d.price ? Math.round((d.price - d.cost) / d.price * 100) : 0}%)`}</small></div>
+        <div className="inline">
+          <button className="pill" onClick={() => { setEditing(d.id); setEditPrice(String(d.price)); setEditCost(d.cost == null ? '' : String(d.cost)); }}>{money(d.price)} ✎</button>
+          <button className={'pill ' + (d.available ? 'okp' : 'offp')} onClick={() => run(supabase().from('dishes').update({ available: !d.available }).eq('id', d.id), d.available ? 'Marked unavailable' : 'Marked available')}>{d.available ? 'Available' : 'Sold out'}</button>
+          <button className="pill offp" onClick={() => confirm(`Remove ${d.name} from the menu?`) && run(supabase().from('dishes').update({ archived: true }).eq('id', d.id), 'Dish removed')}>Remove</button>
+        </div>
+        {editing === d.id && <div className="editPanel">
+          <Field label="Selling price (₹)"><input className="mini" inputMode="decimal" autoFocus value={editPrice} onChange={e => setEditPrice(e.target.value)} /></Field>
+          <Field label="Making cost (₹, optional)"><input className="mini" inputMode="decimal" value={editCost} onChange={e => setEditCost(e.target.value)} /></Field>
+          <button className="primary" onClick={() => savePrice(d.id)}>Save</button>
+          <button className="secondary" onClick={() => setEditing(null)}>Cancel</button>
+        </div>}
       </div>)}
     </Card>
     <div style={{ display: 'grid', gap: 14, alignContent: 'start' }}>
