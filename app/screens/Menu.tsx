@@ -54,6 +54,11 @@ export default function Menu({ data, notify, refresh }: { data: Data } & Common)
         <Field label="Price (₹)"><input inputMode="decimal" value={price} onChange={e => setPrice(e.target.value)} /></Field>
         <Field label="Category"><select value={cat} onChange={e => setCat(e.target.value)}><option value="">None</option>{data.categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>
         <button className="primary" onClick={addDish}>Add dish</button></div></Card>
+      <Card title="Categories" sub="Rename or hide">
+        {data.categories.map(c => <div className="chef" key={c.id}><div style={{ flex: 1 }}><b>{c.name}</b><small>{data.dishes.filter(d => d.category_id === c.id).length} dishes</small></div>
+          <button className="pill" onClick={() => { const n = prompt('Rename category', c.name); if (n?.trim() && n.trim() !== c.name) run(supabase().from('menu_categories').update({ name: n.trim() }).eq('id', c.id), 'Category renamed'); }}>Rename</button>
+          <button className="pill offp" onClick={() => confirm(`Hide category ${c.name}? Its dishes stay but are grouped as Other.`) && run(supabase().from('menu_categories').update({ archived: true }).eq('id', c.id), 'Category hidden')}>Hide</button></div>)}
+      </Card>
       <Card title="Add category" sub="Group dishes in POS"><div className="form">
         <Field label="Category name"><input value={newCat} onChange={e => setNewCat(e.target.value)} /></Field>
         <button className="primary" onClick={addCat}>Add category</button></div></Card>

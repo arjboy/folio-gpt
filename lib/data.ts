@@ -10,6 +10,7 @@ export type Order = { id: string; order_number: string; customer_name: string | 
 export type OrderItem = { order_id: string; dish_name: string; unit_price: number; quantity: number; line_total: number };
 export type Expense = { id: string; expense_date: string; person_name: string | null; amount: number; reason: string; category: string; payment_method: string; status: string };
 export type Advance = { id: string; chef_id: string; advance_date: string; amount: number; reason: string | null; approval_status: string; paid: boolean };
+export type Payout = { id: string; chef_id: string; payout_date: string; salary_amount: number; advance_deduction: number; payable_amount: number; paid_amount: number; status: string };
 export type Settings = { id: string; name: string; address: string | null; phone: string | null; gst_enabled: boolean; gst_percent: number; bill_footer: string | null; opening_time: string | null; closing_time: string | null };
 
 export const money = (n: number) => '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN');
@@ -21,9 +22,9 @@ export const daysAgo = (n: number) => istDate(new Date(Date.now() - n * 864e5));
 
 export type Data = {
   categories: Category[]; dishes: Dish[]; chefs: Chef[]; attendance: Attendance[];
-  orders: Order[]; items: OrderItem[]; expenses: Expense[]; advances: Advance[]; settings: Settings | null;
+  orders: Order[]; items: OrderItem[]; expenses: Expense[]; advances: Advance[]; payouts: Payout[]; settings: Settings | null;
 };
-const empty: Data = { categories: [], dishes: [], chefs: [], attendance: [], orders: [], items: [], expenses: [], advances: [], settings: null };
+const empty: Data = { categories: [], dishes: [], chefs: [], attendance: [], orders: [], items: [], expenses: [], advances: [], payouts: [], settings: null };
 const num = <T extends Record<string, any>>(rows: T[] | null, keys: string[]) =>
   (rows || []).map(r => { const o: any = { ...r }; keys.forEach(k => { if (o[k] != null) o[k] = Number(o[k]); }); return o as T; });
 
@@ -36,7 +37,7 @@ export function useData(enabled: boolean) {
     if (!enabled) return;
     const sb = supabase();
     const since30 = dayStart(daysAgo(30));
-    const [cat, dis, chf, att, ord, exp, adv, set] = await Promise.all([
+    const [cat, dis, chf, att, ord, exp, adv, pay, set] = await Promise.all([
       sb.from('menu_categories').select('*').eq('archived', false).order('sort_order'),
       sb.from('dishes').select('*').eq('archived', false).order('name'),
       sb.from('chefs').select('*').order('name'),
@@ -44,9 +45,10 @@ export function useData(enabled: boolean) {
       sb.from('orders').select('*').gte('created_at', since30).order('created_at', { ascending: false }).limit(1000),
       sb.from('expenses').select('*').gte('expense_date', daysAgo(30)).order('created_at', { ascending: false }),
       sb.from('chef_advances').select('*').order('created_at', { ascending: false }).limit(200),
+      sb.from('salary_payouts').select('*').order('created_at', { ascending: false }).limit(100),
       sb.from('business_settings').select('*').limit(1),
     ]);
-    const failed = [cat, dis, chf, att, ord, exp, adv, set].find(r => r.error);
+    const failed = [cat, dis, chf, att, ord, exp, adv, pay, set].find(r => r.error);
     if (failed?.error) { setError(failed.error.message); setLoading(false); return; }
     const orders = num(ord.data as Order[], ['subtotal', 'discount', 'tax', 'total']);
     const ids = orders.slice(0, 300).map(o => o.id);
@@ -60,12 +62,19 @@ export function useData(enabled: boolean) {
       items: num(it.data as OrderItem[], ['unit_price', 'quantity', 'line_total']),
       expenses: num(exp.data as Expense[], ['amount']),
       advances: num(adv.data as Advance[], ['amount']),
+      payouts: num(pay.data as Payout[], ['salary_amount', 'advance_deduction', 'payable_amount', 'paid_amount']),
       settings: set.data?.[0] ? { ...(set.data[0] as Settings), gst_percent: Number(set.data[0].gst_percent) } : null,
     });
     setError(''); setLoading(false);
   }, [enabled]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => { if (enabled) setLoading(true); refresh(); }, [enabled, refresh]);
+  // Keep screens fresh across devices: refetch every 45s while the tab is visible.
+  useEffect(() => {
+    if (!enabled) return;
+    const t = setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, 45000);
+    return () => clearInterval(t);
+  }, [enabled, refresh]);
   return { data, loading, error, refresh };
 }
 

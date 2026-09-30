@@ -69,6 +69,11 @@ export default function Chefs({ data, notify, refresh }: { data: Data } & Common
       })}
     </Card>
     <div style={{ display: 'grid', gap: 14, alignContent: 'start' }}>
+      <Card title="Advances & payouts" sub="Recent activity">
+        {!data.advances.length && !data.payouts.length && <Empty text="No advances or payouts yet." />}
+        {data.payouts.slice(0, 5).map(x => <div className="row" key={x.id}><span>{x.payout_date} · {data.chefs.find(c => c.id === x.chef_id)?.name} paid</span><b>{money(x.paid_amount)}</b></div>)}
+        {data.advances.slice(0, 8).map(x => <div className="row" key={x.id}><span>{x.advance_date} · {data.chefs.find(c => c.id === x.chef_id)?.name} advance{x.paid ? ' (settled)' : ''}</span><b>{money(x.amount)}{!x.paid && <button className="pill offp" style={{ marginLeft: 6 }} onClick={() => confirm('Delete this advance?') && check(supabase().from('chef_advances').delete().eq('id', x.id), 'Advance deleted')}>✕</button>}</b></div>)}
+      </Card>
       <Card title="Add chef" sub="New team member"><div className="form">
         <Field label="Name"><input value={f.name} onChange={e => setF({ ...f, name: e.target.value })} /></Field>
         <Field label="Role"><input value={f.role} onChange={e => setF({ ...f, role: e.target.value })} placeholder="Head Chef" /></Field>

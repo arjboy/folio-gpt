@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Data } from '@/lib/data';
+import { Data, istDate } from '@/lib/data';
 import { supabase } from '@/lib/supabase';
 import { Card, Common, Field } from './ui';
 
@@ -24,5 +24,9 @@ export default function Settings({ data, notify, refresh }: { data: Data } & Com
       <label className="check"><input type="checkbox" checked={s.gst_enabled} onChange={e => set('gst_enabled', e.target.checked)} />Charge GST on bills</label>
       {s.gst_enabled && <Field label="GST %"><input inputMode="decimal" value={s.gst_percent} onChange={e => set('gst_percent', e.target.value)} /></Field>}
       <button className="primary" onClick={save}>Save settings</button></div></Card>
+    <Card title="Backup" sub="Download everything loaded (last 30 days of orders and expenses)"><button className="primary" onClick={() => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `chinese-wala-backup-${istDate()}.json`; a.click(); URL.revokeObjectURL(a.href);
+    }}>Download backup (JSON)</button></Card>
   </div>;
 }

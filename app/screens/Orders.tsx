@@ -4,6 +4,7 @@ import { Minus, Plus, Printer, Search, Trash2 } from 'lucide-react';
 import { Data, Dish, Order, OrderItem, istDate, logActivity, money } from '@/lib/data';
 import { supabase } from '@/lib/supabase';
 import { Card, Common, Empty, Rows } from './ui';
+import History from './History';
 
 const emoji = (cat = '') => ({ momos: '🥟', noodles: '🍜', 'fried rice': '🍚', starters: '🥢', soups: '🍲', rolls: '🥠', beverages: '🥤', combos: '🍱' } as Record<string, string>)[cat.toLowerCase()] || '🍽️';
 const types = [['dine_in', 'Dine-in'], ['takeaway', 'Takeaway'], ['delivery', 'Delivery'], ['parcel', 'Parcel']];
@@ -25,7 +26,7 @@ export function printBill(o: Order, items: OrderItem[], s: Data['settings']) {
   w.document.close();
 }
 
-export default function Orders({ data, notify, refresh }: { data: Data } & Common) {
+export function NewOrder({ data, notify, refresh }: { data: Data } & Common) {
   const [cat, setCat] = useState('All');
   const [q, setQ] = useState('');
   const [cart, setCart] = useState<Record<string, number>>({});
@@ -33,6 +34,7 @@ export default function Orders({ data, notify, refresh }: { data: Data } & Commo
   const [pay, setPay] = useState('cash');
   const [discount, setDiscount] = useState('');
   const [customer, setCustomer] = useState('');
+  const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<{ o: Order; items: OrderItem[] } | null>(null);
 
@@ -56,7 +58,7 @@ export default function Orders({ data, notify, refresh }: { data: Data } & Commo
     const make = () => `${istDate().replace(/-/g, '').slice(2)}-${Math.floor(1000 + Math.random() * 9000)}`;
     let order: Order | null = null, err = '';
     for (let i = 0; i < 3 && !order; i++) {
-      const r = await sb.from('orders').insert({ order_number: make(), customer_name: customer.trim() || null, order_type: type, status: pay === 'credit' ? 'pending' : 'completed', payment_method: pay, subtotal, discount: disc, tax, total }).select().single();
+      const r = await sb.from('orders').insert({ order_number: make(), customer_name: customer.trim() || null, customer_phone: phone.trim() || null, order_type: type, status: pay === 'credit' ? 'pending' : 'completed', payment_method: pay, subtotal, discount: disc, tax, total }).select().single();
       if (r.error) err = r.error.message; else order = r.data as Order;
     }
     if (!order) { setBusy(false); return notify('Could not save order: ' + err, 'err'); }
@@ -65,7 +67,7 @@ export default function Orders({ data, notify, refresh }: { data: Data } & Commo
     if (ir.error) { await sb.from('orders').delete().eq('id', order.id); setBusy(false); return notify('Could not save items: ' + ir.error.message, 'err'); }
     logActivity('order_created', 'order', order.id, { total, pay });
     setLast({ o: { ...order, subtotal, discount: disc, tax, total }, items: items as OrderItem[] });
-    setCart({}); setDiscount(''); setCustomer(''); setBusy(false);
+    setCart({}); setDiscount(''); setCustomer(''); setPhone(''); setBusy(false);
     notify(`Order #${order.order_number} saved · ${money(total)}`);
     refresh();
   }
@@ -78,7 +80,7 @@ export default function Orders({ data, notify, refresh }: { data: Data } & Commo
       <div className="dishes">{filtered.map((d: Dish) => <button className="dish" key={d.id} onClick={() => add(d.id, 1)}>
         {cart[d.id] > 0 && <i className="qty">{cart[d.id]}</i>}<span>{emoji(catName(d.category_id))}</span><b>{d.name}</b><small>{catName(d.category_id)}</small><strong>{money(d.price)}</strong></button>)}</div>
     </Card>
-    <aside className="bill">
+    <div className="bill">
       <div><h2>Current order</h2><small>{count} items</small></div>
       <div className="seg">{types.map(([v, l]) => <button key={v} className={type === v ? 'on' : ''} onClick={() => setType(v)}>{l}</button>)}</div>
       {lines.map(({ dish, n }) => <div className="line" key={dish.id}>
@@ -86,6 +88,7 @@ export default function Orders({ data, notify, refresh }: { data: Data } & Commo
         <span className="stepper"><button aria-label="Less" onClick={() => add(dish.id, -1)}>{n === 1 ? <Trash2 size={12} /> : <Minus size={12} />}</button><button aria-label="More" onClick={() => add(dish.id, 1)}><Plus size={12} /></button><strong>{money(dish.price * n)}</strong></span></div>)}
       <div className="billFoot">
         <input className="mini" placeholder="Customer name (optional)" value={customer} onChange={e => setCustomer(e.target.value)} />
+        <input className="mini" inputMode="tel" placeholder={pay === 'credit' || type === 'delivery' ? 'Customer phone (recommended)' : 'Customer phone (optional)'} value={phone} onChange={e => setPhone(e.target.value.replace(/[^\d+ ]/g, ''))} />
         <div className="discountRow"><small>Discount ₹</small><input className="mini" inputMode="numeric" value={discount} onChange={e => setDiscount(e.target.value.replace(/[^\d.]/g, ''))} placeholder="0" /></div>
         <Rows rows={[['Subtotal', money(subtotal)], ['Discount', '−' + money(disc)], [gst ? `Tax (${gst}%)` : 'Tax', money(tax)]]} />
         <div className="total"><span>Total</span><b>{money(total)}</b></div>
@@ -93,6 +96,14 @@ export default function Orders({ data, notify, refresh }: { data: Data } & Commo
         <button className="checkout" disabled={!count || busy} onClick={checkout}>{busy ? 'Saving…' : `Complete order · ${money(total)}`}</button>
         {last && <button className="ghost" onClick={() => printBill(last.o, last.items, data.settings)}><Printer size={13} /> Print last bill #{last.o.order_number}</button>}
       </div>
-    </aside>
+    </div>
   </div>;
+}
+
+export default function Orders(props: { data: Data } & Common) {
+  const [tab, setTab] = useState<'new' | 'history'>('new');
+  return <>
+    <div className="seg" style={{ maxWidth: 320, marginTop: 0 }}>{([['new', 'New order'], ['history', 'History']] as const).map(([v, l]) => <button key={v} className={tab === v ? 'on' : ''} onClick={() => setTab(v)}>{l}</button>)}</div>
+    {tab === 'new' ? <NewOrder {...props} /> : <History {...props} />}
+  </>;
 }

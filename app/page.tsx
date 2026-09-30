@@ -44,6 +44,11 @@ export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(!supabaseConfigured);
   const [authError, setAuthError] = useState('');
+  useEffect(() => { // direct links such as /orders or /chefs open that screen
+    const seg = location.pathname.split('/')[1]?.toLowerCase();
+    const hit = nav.find(n => n[0].toLowerCase() === seg);
+    if (hit) setPage(hit[0]);
+  }, []);
   const [unlocked, setUnlocked] = useState<boolean | null>(null);
   useEffect(() => { try { setUnlocked(localStorage.getItem('cw_auth') === CRED_HASH); } catch { setUnlocked(false); } }, []);
   const [toast, setToast] = useState<{ msg: string; kind: string } | null>(null);

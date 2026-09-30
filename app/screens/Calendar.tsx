@@ -38,6 +38,8 @@ export default function Calendar({ data, notify }: { data: Data } & Common) {
       <div className="row"><span>Cash</span><b>{money(t.cash)}</b></div><div className="row"><span>Digital</span><b>{money(t.digital)}</b></div>
       <div className="row"><span>Credit</span><b>{money(t.credit)}</b></div><div className="row"><span>Expenses</span><b>−{money(t.expenses)}</b></div>
       <div className="net"><span>Estimated net</span><b>{money(t.net)}</b></div>
+      <button className="ghost" onClick={() => { const w = window.open('', '_blank', 'width=420,height=600'); if (!w) return;
+        w.document.write(`<html><body style="font:13px sans-serif;max-width:340px;margin:20px auto"><h3>Day report — ${date}</h3>${[['Orders', t.day.length], ['Sales', money(t.sales)], ['Cash', money(t.cash)], ['Digital', money(t.digital)], ['Credit', money(t.credit)], ['Expenses', '-' + money(t.expenses)], ['Advances', '-' + money(t.advances)], ['Estimated net', money(t.net)]].map(r => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}<p>${(rec.notes || '').replace(/[<>&]/g, '')}</p><script>onload=()=>print()</script></body></html>`); w.document.close(); }}>Print day report</button>
     </Card>
   </div>;
 }
