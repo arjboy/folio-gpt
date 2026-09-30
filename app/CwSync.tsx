@@ -8,14 +8,14 @@ const STORE_ID = 'main';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kikpjigkszkclfktzwxu.supabase.co';
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_T9URtyvTXkaovy48X4qDYw_Ajz-W4rX';
 
+declare global { interface Window { __cwSyncReady?: boolean } }
+
 export default function CwSync() {
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
     const storage = window.localStorage;
     const originalSetItem = storage.setItem.bind(storage);
-    const originalRemoveItem = storage.removeItem.bind(storage);
     let ready = false;
     let queued: string | null = null;
     let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -28,10 +28,8 @@ export default function CwSync() {
           const data = JSON.parse(raw);
           const { error } = await supabase.from('restaurant_store').upsert({ id: STORE_ID, data, updated_at: new Date().toISOString() });
           if (error) throw error;
-        } catch (e) {
-          console.error('Restaurant data sync failed', e);
-        }
-      }, 150);
+        } catch (e) { console.error('Restaurant data sync failed', e); }
+      }, 200);
     };
 
     storage.setItem = ((key: string, value: string) => {
@@ -39,64 +37,44 @@ export default function CwSync() {
       if (key === STORE_KEY) save(value);
     }) as Storage['setItem'];
 
-    storage.removeItem = ((key: string) => {
-      originalRemoveItem(key);
-      if (key === STORE_KEY && ready) void supabase.from('restaurant_store').delete().eq('id', STORE_ID);
-    }) as Storage['removeItem'];
+    const publishLoaded = (data: unknown) => {
+      window.__cwSyncReady = true;
+      ready = true;
+      window.dispatchEvent(new CustomEvent('cw-store-loaded', { detail: data }));
+      if (queued) { const pending = queued; queued = null; save(pending); }
+    };
 
     const sync = async () => {
       try {
-        const { data: remote, error } = await supabase
-          .from('restaurant_store')
-          .select('data,updated_at')
-          .eq('id', STORE_ID)
-          .maybeSingle();
+        const { data: remote, error } = await supabase.from('restaurant_store').select('data,updated_at').eq('id', STORE_ID).maybeSingle();
         if (error) throw error;
-
         const localRaw = storage.getItem(STORE_KEY);
         const remoteData = remote?.data as any;
 
         if (remoteData && typeof remoteData === 'object') {
-          const remoteRaw = JSON.stringify(remoteData);
-          ready = true;
-          if (localRaw !== remoteRaw) {
-            originalSetItem(STORE_KEY, remoteRaw);
-            queued = null;
-            // A new Vercel preview/browser may have no local copy yet. Reload once
-            // so the existing app reads the database-backed store on its normal mount.
-            window.location.reload();
-          }
+          originalSetItem(STORE_KEY, JSON.stringify(remoteData));
+          publishLoaded(remoteData);
           return;
         }
 
-        // First sync: preserve existing browser data by migrating it into Supabase.
-        ready = true;
         if (localRaw) {
           const local = JSON.parse(localRaw);
           const { error: upsertError } = await supabase.from('restaurant_store').upsert({ id: STORE_ID, data: local, updated_at: new Date().toISOString() });
           if (upsertError) throw upsertError;
-          queued = null;
-        } else if (queued) {
-          const data = JSON.parse(queued);
-          const { error: upsertError } = await supabase.from('restaurant_store').upsert({ id: STORE_ID, data, updated_at: new Date().toISOString() });
-          if (upsertError) throw upsertError;
-          queued = null;
+          publishLoaded(local);
+        } else {
+          publishLoaded(null);
         }
       } catch (e) {
         console.error('Restaurant database sync unavailable; browser persistence remains active.', e);
+        window.__cwSyncReady = true;
         ready = true;
-        if (queued) save(queued);
+        if (queued) { const pending = queued; queued = null; save(pending); }
       }
     };
 
     void sync();
-
-    return () => {
-      storage.setItem = originalSetItem;
-      storage.removeItem = originalRemoveItem;
-      if (saveTimer) clearTimeout(saveTimer);
-    };
+    return () => { storage.setItem = originalSetItem; if (saveTimer) clearTimeout(saveTimer); };
   }, []);
-
   return null;
 }
