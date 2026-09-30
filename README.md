@@ -17,7 +17,7 @@ npm run dev
 ```
 
 ## Access
-App-level login (username `admin`; only a hash of the credentials is in the code). There is no login for now. The app starts an anonymous Supabase session automatically (enable anonymous sign-ins under Authentication → Sign In / Providers), which satisfies the `authenticated` RLS policies. Add real owner login before sharing the URL widely.
+Sign in with Supabase Auth (username `admin` maps to `admin@thechinesewala.app`). Row-level security on every restaurant table only allows that account, so the data is protected on the server, not just hidden in the UI. To change the password, use Supabase → Authentication → Users.
 
 ## What is wired to Supabase
 - **Dashboard**: today's sales, order count, items sold, cash/digital/credit split, expenses, advances, 7-day chart, recent orders, chef attendance — all computed from real records (India time).
