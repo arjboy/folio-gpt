@@ -37,11 +37,11 @@ export default function CwSync() {
       if (key === STORE_KEY) save(value);
     }) as Storage['setItem'];
 
-    const publishLoaded = (data: unknown) => {
+    const publishLoaded = (data: unknown, persistQueued = true) => {
       window.__cwSyncReady = true;
       ready = true;
       window.dispatchEvent(new CustomEvent('cw-store-loaded', { detail: data }));
-      if (queued) { const pending = queued; queued = null; save(pending); }
+      if (persistQueued && queued) { const pending = queued; queued = null; save(pending); }
     };
 
     const sync = async () => {
@@ -52,8 +52,10 @@ export default function CwSync() {
         const remoteData = remote?.data as any;
 
         if (remoteData && typeof remoteData === 'object') {
+          // Supabase is authoritative. Never write the pre-sync seeded state back over it.
+          queued = null;
           originalSetItem(STORE_KEY, JSON.stringify(remoteData));
-          publishLoaded(remoteData);
+          publishLoaded(remoteData, false);
           return;
         }
 
