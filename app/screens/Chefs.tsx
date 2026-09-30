@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Data, Chef, istDate, istTime, logActivity, money } from '@/lib/data';
+import { Data, Chef, MONEY_MSG, istDate, istTime, logActivity, money, okMoney } from '@/lib/data';
 import { supabase } from '@/lib/supabase';
 import { Card, Common, Empty, Field, Rows } from './ui';
 
@@ -31,13 +31,15 @@ export default function Chefs({ data, notify, refresh }: { data: Data } & Common
   };
   const addChef = async () => {
     const s = Number(f.salary);
-    if (!f.name.trim() || !(s > 0)) return notify('Enter name and salary', 'err');
+    if (!f.name.trim()) return notify('Enter name and salary', 'err');
+    if (!okMoney(s, false)) return notify(MONEY_MSG, 'err');
     const ok = await check(supabase().from('chefs').insert({ name: f.name.trim(), role: f.role || null, phone: f.phone || null, salary_type: f.type, daily_salary: f.type === 'daily' ? s : null, monthly_salary: f.type === 'monthly' ? s : null, joining_date: today }), 'Chef added');
     if (ok) setF({ name: '', role: '', phone: '', type: 'daily', salary: '' });
   };
   const addAdvance = async () => {
     const a = Number(adv.amount);
-    if (!adv.chef || !(a > 0)) return notify('Pick a chef and amount', 'err');
+    if (!adv.chef) return notify('Pick a chef and amount', 'err');
+    if (!okMoney(a, false)) return notify(MONEY_MSG, 'err');
     const ok = await check(supabase().from('chef_advances').insert({ chef_id: adv.chef, amount: a, reason: adv.reason || null, approval_status: 'approved', paid: false }), 'Advance recorded');
     if (ok) { logActivity('advance_given', 'chef', adv.chef, { amount: a }); setAdv({ chef: '', amount: '', reason: '' }); }
   };

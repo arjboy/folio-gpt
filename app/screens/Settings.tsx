@@ -10,7 +10,9 @@ export default function Settings({ data, notify, refresh }: { data: Data } & Com
   if (!s) return <Card title="Business settings" sub="">No settings row found in the database.</Card>;
   const set = (k: string, v: any) => setS({ ...s, [k]: v } as any);
   const save = async () => {
-    const { error } = await supabase().from('business_settings').update({ name: s.name, address: s.address, phone: s.phone, gst_enabled: s.gst_enabled, gst_percent: Number(s.gst_percent) || 0, bill_footer: s.bill_footer, opening_time: s.opening_time || null, closing_time: s.closing_time || null, updated_at: new Date().toISOString() }).eq('id', s.id);
+    const g = Number(s.gst_percent) || 0;
+    if (s.gst_enabled && !(g >= 0 && g <= 100)) return notify('GST must be between 0 and 100', 'err');
+    const { error } = await supabase().from('business_settings').update({ name: s.name, address: s.address, phone: s.phone, gst_enabled: s.gst_enabled, gst_percent: g, bill_footer: s.bill_footer, opening_time: s.opening_time || null, closing_time: s.closing_time || null, updated_at: new Date().toISOString() }).eq('id', s.id);
     error ? notify(error.message, 'err') : (notify('Settings saved'), refresh());
   };
   return <div className="cols">

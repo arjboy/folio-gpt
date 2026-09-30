@@ -13,6 +13,10 @@ export type Advance = { id: string; chef_id: string; advance_date: string; amoun
 export type Payout = { id: string; chef_id: string; payout_date: string; salary_amount: number; advance_deduction: number; payable_amount: number; paid_amount: number; status: string };
 export type Settings = { id: string; name: string; address: string | null; phone: string | null; gst_enabled: boolean; gst_percent: number; bill_footer: string | null; opening_time: string | null; closing_time: string | null };
 
+// Largest amount the app accepts in one field (the database column allows far more, but bigger is always a typo).
+export const MAX_MONEY = 1000000;
+export const okMoney = (n: number, allowZero = true) => Number.isFinite(n) && n <= MAX_MONEY && (allowZero ? n >= 0 : n > 0);
+export const MONEY_MSG = 'Enter a valid amount (up to ₹10,00,000)';
 export const money = (n: number) => '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN');
 // Business days follow India time regardless of where the browser is.
 export const istDate = (d = new Date()) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });

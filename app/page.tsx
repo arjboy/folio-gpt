@@ -61,7 +61,10 @@ export default function Home() {
 
   const authed = Boolean(session);
   const { data, loading, error, refresh } = useData(authed);
-  const notify = (msg: string, kind: 'ok' | 'err' = 'ok') => { setToast({ msg, kind }); setTimeout(() => setToast(null), 3500); };
+  const friendly = (m: string) => /numeric field overflow/i.test(m) ? 'That number is too large. Please check the amounts you entered.'
+    : /violates check constraint/i.test(m) ? 'One of the values is not allowed. Please check your entries.'
+    : /duplicate key/i.test(m) ? 'That already exists.' : m;
+  const notify = (msg: string, kind: 'ok' | 'err' = 'ok') => { setToast({ msg: kind === 'err' ? friendly(msg) : msg, kind }); setTimeout(() => setToast(null), 3500); };
   const common = { data, notify, refresh };
 
   if (!supabaseConfigured) return <div className="login"><div className="card"><h1>Setup needed</h1><p className="errtxt">NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are not set on this deployment.</p></div></div>;

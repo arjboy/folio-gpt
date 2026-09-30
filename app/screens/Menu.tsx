@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Data, logActivity, money } from '@/lib/data';
+import { Data, MONEY_MSG, logActivity, money, okMoney } from '@/lib/data';
 import { supabase } from '@/lib/supabase';
 import { Card, Common, Empty, Field } from './ui';
 
@@ -19,7 +19,8 @@ export default function Menu({ data, notify, refresh }: { data: Data } & Common)
   }
   const addDish = async () => {
     const pr = Number(price);
-    if (!name.trim() || !(pr >= 0) || price === '') return notify('Enter a dish name and price', 'err');
+    if (!name.trim() || price === '') return notify('Enter a dish name and price', 'err');
+    if (!okMoney(pr)) return notify(MONEY_MSG, 'err');
     await run(supabase().from('dishes').insert({ name: name.trim(), price: pr, category_id: cat || null }), 'Dish added');
     logActivity('dish_added', 'dish', undefined, { name, price: pr });
     setName(''); setPrice('');
@@ -31,7 +32,7 @@ export default function Menu({ data, notify, refresh }: { data: Data } & Common)
   };
   const savePrice = async (id: string) => {
     const pr = Number(editPrice);
-    if (!(pr >= 0) || editPrice === '') return notify('Enter a valid price', 'err');
+    if (editPrice === '' || !okMoney(pr)) return notify(MONEY_MSG, 'err');
     await run(supabase().from('dishes').update({ price: pr, updated_at: new Date().toISOString() }).eq('id', id), 'Price updated');
     setEditing(null);
   };
