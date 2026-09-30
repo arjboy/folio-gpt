@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Data, istDate, money } from '@/lib/data';
+import { Data, MONEY_MSG, istDate, money, okMoney } from '@/lib/data';
 import { supabase } from '@/lib/supabase';
 import { Card, Common, Empty, Field } from './ui';
 
@@ -15,7 +15,8 @@ export default function Expenses({ data, notify, refresh }: { data: Data } & Com
 
   const add = async () => {
     const a = Number(f.amount);
-    if (!(a > 0) || !f.reason.trim()) return notify('Enter amount and reason', 'err');
+    if (!f.reason.trim()) return notify('Enter amount and reason', 'err');
+    if (!okMoney(a, false)) return notify(MONEY_MSG, 'err');
     const { error } = await supabase().from('expenses').insert({ amount: a, reason: f.reason.trim(), category: f.category, person_name: f.person || null, payment_method: f.method, expense_date: f.date, status: 'spent' });
     if (error) return notify(error.message, 'err');
     notify('Expense recorded'); setF({ ...f, amount: '', reason: '', person: '' }); refresh();

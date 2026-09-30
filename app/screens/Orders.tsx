@@ -62,7 +62,7 @@ export function NewOrder({ data, notify, refresh }: { data: Data } & Common) {
       if (r.error) err = r.error.message; else order = r.data as Order;
     }
     if (!order) { setBusy(false); return notify('Could not save order: ' + err, 'err'); }
-    const items = lines.map(l => ({ order_id: order!.id, dish_id: l.dish.id, dish_name: l.dish.name, unit_price: l.dish.price, quantity: l.n, line_total: l.dish.price * l.n }));
+    const items = lines.map(l => ({ order_id: order!.id, dish_id: l.dish.id, dish_name: l.dish.name, unit_price: l.dish.price, unit_cost: l.dish.cost, quantity: l.n, line_total: l.dish.price * l.n }));
     const ir = await sb.from('order_items').insert(items);
     if (ir.error) { await sb.from('orders').delete().eq('id', order.id); setBusy(false); return notify('Could not save items: ' + ir.error.message, 'err'); }
     logActivity('order_created', 'order', order.id, { total, pay });
@@ -73,6 +73,7 @@ export function NewOrder({ data, notify, refresh }: { data: Data } & Common) {
   }
 
   return <div className="pos">
+    {count > 0 && <button className="cartBar" onClick={() => document.getElementById('bill')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><span>{count} item{count > 1 ? 's' : ''} · View order</span><b>{money(total)}</b></button>}
     <Card title="Quick order" sub="Tap dishes to add them to the bill">
       <div className="search"><Search size={15} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search dishes..." /></div>
       <div className="cats">{['All', ...data.categories.map(c => c.name)].map(c => <button className={cat === c ? 'chosen' : ''} onClick={() => setCat(c)} key={c}>{c}</button>)}</div>
@@ -80,7 +81,7 @@ export function NewOrder({ data, notify, refresh }: { data: Data } & Common) {
       <div className="dishes">{filtered.map((d: Dish) => <button className="dish" key={d.id} onClick={() => add(d.id, 1)}>
         {cart[d.id] > 0 && <i className="qty">{cart[d.id]}</i>}<span>{emoji(catName(d.category_id))}</span><b>{d.name}</b><small>{catName(d.category_id)}</small><strong>{money(d.price)}</strong></button>)}</div>
     </Card>
-    <div className="bill">
+    <div className="bill" id="bill">
       <div><h2>Current order</h2><small>{count} items</small></div>
       <div className="seg">{types.map(([v, l]) => <button key={v} className={type === v ? 'on' : ''} onClick={() => setType(v)}>{l}</button>)}</div>
       {lines.map(({ dish, n }) => <div className="line" key={dish.id}>

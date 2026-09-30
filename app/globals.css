@@ -16,9 +16,104 @@
 .stepper{display:flex;align-items:center;gap:5px}.stepper button{background:#f0f0eb;border-radius:5px;width:22px;height:22px;display:grid;place-items:center}.stepper strong{min-width:52px;text-align:right}
 .tr.exp{grid-template-columns:.9fr 2fr .8fr .8fr .7fr;min-width:520px;align-items:center}.tr.exp6{grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;min-width:600px}
 .hbtns{display:flex;gap:8px;align-items:center}.ghostbtn{background:#fff;border:1px solid #e3e3dd;border-radius:8px;padding:10px}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#242522;color:#fff;padding:11px 16px;border-radius:9px;font-size:11px;z-index:50;max-width:90vw}.toast.err{background:#b5402a}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#242522;color:#fff;padding:11px 16px;border-radius:9px;font-size:11px;z-index:200;max-width:90vw}.toast.err{background:#b5402a}
 .login{min-height:100vh;display:grid;place-items:center;padding:16px}.login .card{width:100%;max-width:340px;padding:24px}.login h1{font-size:18px}
 .quick button>div{text-align:left}
 .tr.hist{grid-template-columns:1.1fr .8fr 1fr 1fr .9fr 1fr;cursor:pointer;min-width:520px}.tr.hist:hover,.tr.hist.active{background:#fff8e8}.bad{color:#c0452f}
 .dangerBtn{color:#b5402a;border-color:#efd3cb}.iconBtn{width:28px;height:28px;border-radius:7px;background:#f0f0eb;display:grid;place-items:center}
 .billHead{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:13px}.toolbar{display:flex;gap:10px;margin-bottom:8px}.toolbar .search{flex:1;margin:0}
+
+.chef.wrapRow{flex-wrap:wrap;row-gap:8px}
+.editPanel{flex-basis:100%;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:#fafaf7;border:1px solid #ecece7;border-radius:9px;padding:10px}
+.editPanel .field{margin:0;flex:1;min-width:110px}.editPanel .mini{margin:0;width:100%}
+.editPanel .primary,.editPanel .secondary{padding:9px 14px;font-size:10px;margin-bottom:0}
+.secondary{background:#fff;border:1px solid #e3e3dd;border-radius:8px;font-weight:700;color:#333}
+.chef>.inline{flex:0 0 auto;justify-content:flex-end}
+
+/* Popup dialog */
+.modalBackdrop{position:fixed;inset:0;background:rgba(25,26,24,.55);display:grid;place-items:center;z-index:100;padding:16px;animation:fadeIn .15s ease}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:480px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.25);animation:popIn .18s ease}
+.modalHead{display:flex;justify-content:space-between;align-items:flex-start;padding:18px 20px 12px}
+.modalHead h2{font-size:15px;margin:0}.modalHead small{color:#92948d;font-size:10px}
+.modalBody{padding:4px 20px 8px;overflow:auto;display:grid;gap:12px}
+.modalFoot{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:14px 20px;border-top:1px solid #f0f0ec}
+.modalFoot .left{margin-right:auto}
+.modalBody .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.margin{font-size:10px;padding:9px 11px;border-radius:8px;background:#f2f8f3;color:#3f8a4d}.margin.neg{background:#fbeeea;color:#b5502f}.margin.idle{background:#f6f6f2;color:#92948d}
+.dishRow{display:flex;align-items:center;gap:10px;padding:11px 8px;border-bottom:1px solid #f0f0ec;cursor:pointer;border-radius:8px}.dishRow:last-child{border:0}.dishRow:hover{background:#fafaf7}
+.dishRow .info{flex:1;min-width:0}.dishRow b{font-size:11px;display:block}.dishRow small{font-size:9px;color:#999;display:block;margin-top:3px}
+.dishRow .price{text-align:right;font-size:11px;font-weight:700}.dishRow .price small{font-weight:400}
+.dishRow.off{opacity:.55}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@media(max-width:600px){.modalBackdrop{align-items:end;padding:0}.modal{max-width:none;border-radius:16px 16px 0 0;max-height:92vh}.modalBody .row2{grid-template-columns:1fr 1fr}}
+.secondary{padding:10px 14px;font-size:11px;display:inline-flex;align-items:center;gap:6px}
+.cardHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+@media(max-width:600px){.toast{bottom:auto;top:14px}}
+
+/* ===== Mobile-first responsive layer (phones / small tablets). Desktop is untouched. ===== */
+.tabbar,.cartBar{display:none}
+.moreGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.moreGrid button{background:#f6f6f2;border-radius:12px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12px;font-weight:600}
+.moreGrid button.sel{background:#242522;color:#fff}
+@media(max-width:768px){
+  html{-webkit-text-size-adjust:100%}
+  /* shell: no sidebar, bottom tab bar instead */
+  aside{display:none}
+  main{margin-left:0;padding:16px 14px calc(92px + env(safe-area-inset-bottom))}
+  header{margin-bottom:16px;gap:10px;align-items:center}
+  header p{display:none}
+  header>div>small{font-size:11px}
+  h1{font-size:20px}
+  header .primary{padding:11px 14px;font-size:12px}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:60;background:#191a18;padding:6px 6px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(0,0,0,.18)}
+  .tabbar button{background:transparent;color:#9b9e96;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;border-radius:10px;font-size:10px;min-height:48px;justify-content:center}
+  .tabbar button.sel{color:#fff;background:#2a2b28;box-shadow:inset 0 2px #eeb23e}
+  /* readable type and comfortable tap targets */
+  input,select,textarea,.field input,.field select,.field textarea,.mini,.search input{font-size:16px!important}
+  .field input,.field select,.field textarea,.mini{padding:12px}
+  .primary,.secondary,.ghost,.checkout{min-height:44px;font-size:13px}
+  .pill{padding:9px 12px;font-size:11px}
+  .stat small,.cardHead small{font-size:11px}.stat em{font-size:11px}
+  .stat strong{font-size:18px}
+  .row{font-size:12px;padding:9px 0}
+  .chef b,.chefBlock b{font-size:13px}.chef small{font-size:11px}.chef em{font-size:11px}
+  .dish{min-height:104px;padding:12px}.dish b{font-size:12px}.dish small{font-size:10px}.dish strong{font-size:12px}
+  .cats button{padding:10px 13px;font-size:12px}
+  .seg button{padding:11px 4px;font-size:11px}
+  .payments button{padding:12px 2px;font-size:12px}
+  .line{font-size:12px}.stepper button{width:32px;height:32px}
+  .dishRow{padding:14px 6px}.dishRow b{font-size:13px}.dishRow small{font-size:11px}.dishRow .price{font-size:13px}
+  .check{font-size:13px}.check input{width:20px;height:20px}
+  .card{padding:14px}
+  .cardHead h2{font-size:14px}
+  /* tables become stacked rows instead of sideways scrolling */
+  .table{overflow:visible}
+  .tr,.tr.hist,.tr.exp,.tr.exp6{grid-template-columns:1fr 1fr;min-width:0;gap:4px 10px;font-size:12px;padding:12px 4px}
+  .tr>span:nth-child(even){text-align:right}
+  /* POS: dishes first, bill below, floating cart shortcut */
+  .pos{display:flex;flex-direction:column}
+  .bill{position:static;min-height:0}
+  .cartBar{display:flex;justify-content:space-between;align-items:center;position:fixed;left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:55;background:#d99d2d;color:#fff;border-radius:12px;padding:14px 16px;font-size:13px;font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.25)}
+  .dishes{grid-template-columns:1fr 1fr}
+  .cols,.settingsGrid{grid-template-columns:1fr}
+  .toast{top:12px;bottom:auto;max-width:92vw}
+  .hbtns{gap:6px}
+  .editPanel{flex-direction:column;align-items:stretch}
+  .modalFoot{flex-wrap:wrap}.modalFoot .primary,.modalFoot .secondary{flex:1}
+  .modalFoot .left{flex-basis:100%;margin:0;text-align:center;padding:11px}
+  .login .card{max-width:none}
+}
+@media(max-width:380px){.stats{grid-template-columns:1fr}.dishes{grid-template-columns:1fr 1fr}.tabbar button{font-size:9px}}
+
+.sheetBackdrop{display:none}
+@media(max-width:768px){
+  .sheetBackdrop{display:block;position:fixed;inset:0;background:rgba(25,26,24,.55);z-index:89}
+  .bill.nosel{display:none}
+  .bill.sheet{position:fixed;left:0;right:0;bottom:0;z-index:90;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;border:0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));animation:popIn .18s ease}
+  header .primary{white-space:nowrap}
+  .field small{font-size:12px}
+  .none{font-size:12px}
+  .errtxt{font-size:12px}
+  .margin{font-size:12px}
+  .modalHead h2{font-size:17px}.modalHead small{font-size:12px}
+}
